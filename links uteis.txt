@@ -1,0 +1,7 @@
+https://dash.plot.ly/dash-core-components
+https://plot.ly/javascript/reference/#histogram2d **********
+https://plot.ly/python/ ***
+
+
+amazon s3 bucket:
+https://docs.aws.amazon.com/AmazonS3/latest/dev/HLuploadFileJava.html ** 

@@ -19,6 +19,7 @@ df_rn = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-RN.csv')
 df_morteNeonatal_AC=df_ac[:]
 df_morteNeonatal_AC['year_death'] = df_morteNeonatal_AC['year_death'].astype('Int64')
 df_morteNeonatal_AC=df_morteNeonatal_AC[df_morteNeonatal_AC["morte_menor_28d"] == 1]
+
 df_morteNeonatal_AC.loc[df_morteNeonatal_AC.n_sg_sexo == 'M','n_sg_sexo'] = 1
 df_morteNeonatal_AC.loc[df_morteNeonatal_AC.n_sg_sexo == 'F','n_sg_sexo'] = 2
 df_morteNeonatal_AC['n_sg_sexo']=df_morteNeonatal_AC['n_sg_sexo'].astype(int)
@@ -45,56 +46,62 @@ available_indicators_idade_mae = df_morteNeonatal_AC['n_ct_idade'].unique()
 available_indicators_cor_mae = df_morteNeonatal_AC['n_tp_raca_cor_mae'].unique()
 available_indicators_tipo_de_parto = df_morteNeonatal_AC['n_tp_ocorrencia'].unique()
 ##----------------- Indicadores -------------
-
 app.layout = html.Div([
     html.Div([
         dcc.Tabs(id="tabs", value='tab-1', children=[
-            dcc.Tab(label='Tab one', value='tab-1'),
-            dcc.Tab(label='Tab two', value='tab-2'),
-            html.Div(id='tabs-content'),
-        ]),
-        html.Div([
-            html.Div([
-                dcc.Dropdown(
-                    id='xaxis-column2',
-                    options=[{'label': i, 'value': i} for i in available_indicators_cor_mae],
-                    value='maes_pardas'
-                ),
-                dcc.RadioItems(
-                    id='xaxis-type2',
-                    options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-                    value='Linear',
-                    labelStyle={'display': 'inline-block'}
+            dcc.Tab(label='Número de óbitos por peso, cor da mãe, ano, local de nascença', value='tab-1', children=[
+                html.Div([
+                    html.Div([
+                        dcc.Dropdown(
+                            id='xaxis-column2',
+                            options=[{'label': i, 'value': i} for i in available_indicators_cor_mae],
+                            value='maes_pardas'
+                        ),
+                        dcc.RadioItems(
+                            id='xaxis-type2',
+                            options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
+                            value='Linear',
+                            labelStyle={'display': 'inline-block'}
+                        )
+                    ],
+                    style={'width': '48%', 'display': 'inline-block'}),
+                    html.Div([
+                        dcc.Dropdown(
+                            id='yaxis-column2',
+                            options=[{'label': i, 'value': i} for i in available_indicators_tipo_de_parto],
+                            value='hospital'
+                        ),
+                        dcc.RadioItems(
+                            id='yaxis-type2',
+                            options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
+                            value='Linear',
+                            labelStyle={'display': 'inline-block'}
+                        )
+                    ],style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
+                ]),
+                # dcc.Graph(id='indicator-graphic'),
+                dcc.Graph(id='indicator-graphic2'),
+                html.Br(), html.Br(),
+                dcc.Slider(
+                    id='year--slider2',
+                    min=df_morteNeonatal_AC['year_death'].min(),
+                    max=df_morteNeonatal_AC['year_death'].max(),
+                    value=df_morteNeonatal_AC['year_death'].max(),
+                    marks={str(year): str(year) for year in df_morteNeonatal_AC['year_death'].unique()},
+                    step=None
                 )
-            ],
-            style={'width': '48%', 'display': 'inline-block'}),
+            ]),
+            dcc.Tab(label='Segunda tab', value='tab-2', children=[
 
-            html.Div([
-                dcc.Dropdown(
-                    id='yaxis-column2',
-                    options=[{'label': i, 'value': i} for i in available_indicators_tipo_de_parto],
-                    value='hospital'
-                ),
-                dcc.RadioItems(
-                    id='yaxis-type2',
-                    options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-                    value='Linear',
-                    labelStyle={'display': 'inline-block'}
-                )
-            ],style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
+
+            ]),
+            dcc.Tab(label='Terceira tab', value='tab-3', children=[
+
+
+            ]),
         ]),
-
-        # dcc.Graph(id='indicator-graphic'),
-        dcc.Graph(id='indicator-graphic2'),
-        html.Br(), html.Br(),
-        dcc.Slider(
-            id='year--slider2',
-            min=df_morteNeonatal_AC['year_death'].min(),
-            max=df_morteNeonatal_AC['year_death'].max(),
-            value=df_morteNeonatal_AC['year_death'].max(),
-            marks={str(year): str(year) for year in df_morteNeonatal_AC['year_death'].unique()},
-            step=None
-        )
+        html.Div(id='tabs-content'),
+        
     ])
 ])
 @app.callback(Output('tabs-content', 'children'),
@@ -102,12 +109,14 @@ app.layout = html.Div([
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            html.H3('Tab content 1')
         ])
     elif tab == 'tab-2':
         return html.Div([
-            html.H3('Tab content 2'),
         ])
+    elif tab == 'tab-3':
+        return html.Div([
+        ])
+
 @app.callback(
     Output('indicator-graphic2', 'figure'),
     [Input('xaxis-column2', 'value'),
@@ -146,7 +155,7 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
                 name='Homens',
                 text=aux_homem_final['n_sg_sexo'],
                 z=lista_idade_mae,
-                type='bar',
+                type='histogram',
                 marker={
                    'size': 20,
                 }
@@ -161,7 +170,7 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
                 #values = [aux_mulher_final.groupby('n_nu_peso')['n_nu_peso'].count().values,aux_homem_final.groupby('n_nu_peso')['n_nu_peso'].count().values],
                 #z=lista_idade_mae,
                 text=aux_mulher_final['n_sg_sexo'],
-                type='bar',
+                type='histogram',
                 marker={
                     'size': 20,
                 }
@@ -183,5 +192,13 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
     }
 
 
+
+
+
+
+
+
 if __name__ == '__main__':
-    app.run_server(host='10.123.70.108',port='8050',debug=True)
+    app.run_server(host='192.168.70.99',port='8050',debug=True)
+
+
