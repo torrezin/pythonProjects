@@ -12,9 +12,9 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 df = pd.read_csv('https://plotly.github.io/datasets/country_indicators.csv')
 
 
-df_ac = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-AC.csv')
-df_es = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-ES.csv')
-df_rn = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-RN.csv')
+df_ac = pd.read_csv('Dados-AC.csv')
+df_es = pd.read_csv('Dados-ES.csv')
+df_rn = pd.read_csv('Dados-RN.csv')
 ##------------------ACRE---------------------
 df_morteNeonatal_AC=df_ac[:]
 df_morteNeonatal_AC['year_death'] = df_morteNeonatal_AC['year_death'].astype('Int64')
@@ -48,7 +48,7 @@ available_indicators_tipo_de_parto = df_morteNeonatal_AC['n_tp_ocorrencia'].uniq
 ##----------------- Indicadores -------------
 app.layout = html.Div([
     html.Div([
-        dcc.Tabs(id="tabs", value='tab-1', children=[
+        dcc.Tabs(id="tabs", value='tab-2', children=[
             dcc.Tab(label='Número de óbitos por peso, cor da mãe, ano, local de nascença', value='tab-1', children=[
                 html.Div([
                     html.Div([
@@ -79,7 +79,6 @@ app.layout = html.Div([
                         )
                     ],style={'width': '48%', 'float': 'right', 'display': 'inline-block'})
                 ]),
-                # dcc.Graph(id='indicator-graphic'),
                 dcc.Graph(id='indicator-graphic2'),
                 html.Br(), html.Br(),
                 dcc.Slider(
@@ -92,8 +91,25 @@ app.layout = html.Div([
                 )
             ]),
             dcc.Tab(label='Segunda tab', value='tab-2', children=[
-
-
+                html.Div([
+                    html.Div([
+                        html.Br(), html.Br(),
+                        dcc.Graph(id='indicator-graphic3'),
+                    ],style={'width': '40%', 'float': 'right', 'display': 'inline-block'}),
+                    html.Div([
+                        html.Br(), html.Br(),
+                        dcc.Graph(id='indicator-graphic4'),
+                    ],style={'width': '60%','height':'100%','float': 'left', 'display': 'inline-block'}),
+                    dcc.Slider(
+                        id='year--slider3',
+                        min=df_morteNeonatal_AC['year_death'].min(),
+                        max=df_morteNeonatal_AC['year_death'].max(),
+                        value=df_morteNeonatal_AC['year_death'].max(),
+                        marks={str(year): str(year) for year in df_morteNeonatal_AC['year_death'].unique()},
+                        step=None
+                    ),
+                ])
+                
             ]),
             dcc.Tab(label='Terceira tab', value='tab-3', children=[
 
@@ -131,6 +147,7 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
 
     menor_ano=aux['year_death'].min()
     #maior_ano=aux['year_death'].max()
+
     dataframe_original=aux[aux['year_death']==2006]
     if year_value2>menor_ano:
         for i in range(menor_ano+1,year_value2+1):
@@ -145,7 +162,7 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
     aux_mulher_final = dataframe_original[dataframe_original['n_sg_sexo']=='Mulher']
 
     lista_pesos=list(available_indicators_peso)
-    lista_idade_mae=list(available_indicators_idade_mae)
+    #lista_idade_mae=list(available_indicators_idade_mae)
 
     return {
         'data': [
@@ -154,10 +171,11 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
                 y=aux_homem_final.groupby('n_nu_peso')['n_nu_peso'].count().values,
                 name='Homens',
                 text=aux_homem_final['n_sg_sexo'],
-                z=lista_idade_mae,
+                #z=lista_idade_mae,
                 type='histogram',
                 marker={
                    'size': 20,
+                   'color':'rgb(0, 179, 255)'
                 }
                 #type='pie'
                 #type='scatter3d'
@@ -166,13 +184,12 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
                 x=lista_pesos,
                 y=aux_mulher_final.groupby('n_nu_peso')['n_nu_peso'].count().values,
                 name='Mulheres',
-                #labels=['Mulheres','Homens'],
-                #values = [aux_mulher_final.groupby('n_nu_peso')['n_nu_peso'].count().values,aux_homem_final.groupby('n_nu_peso')['n_nu_peso'].count().values],
                 #z=lista_idade_mae,
                 text=aux_mulher_final['n_sg_sexo'],
                 type='histogram',
                 marker={
                     'size': 20,
+                    'color':'rgb(255, 64, 207)'
                 }
                 # type='scatter3d'
             )
@@ -190,7 +207,104 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
             hovermode='closest'
         )
     }
+@app.callback(
+    Output('indicator-graphic3', 'figure'),
+    [Input('year--slider3', 'value')])
+def update_graph3(year_value3):
+    aux=df_morteNeonatal_AC[:]
 
+    menor_ano=aux['year_death'].min()
+    dataframe_original=aux[aux['year_death']==2006]
+    if year_value3>menor_ano:
+       for i in range(menor_ano+1,year_value3+1):
+           dataframe_auxiliar=aux[aux['year_death']==i]
+           dataframe_original=dataframe_original.append(dataframe_auxiliar)
+
+    aux_homem_final = dataframe_original[dataframe_original['n_sg_sexo']=='Homem']
+    aux_mulher_final = dataframe_original[dataframe_original['n_sg_sexo']=='Mulher']
+
+    return {
+        'data': [
+            dict(
+                values=[aux_homem_final.groupby('n_sg_sexo')['n_sg_sexo'].count().values[0],aux_mulher_final.groupby('n_sg_sexo')['n_sg_sexo'].count().values[0]],
+                labels=['Meninos','Meninas'],
+                type='pie',
+                marker={
+                    'colors':['rgb(0, 179, 255)','rgb(255, 105, 217)']
+                }
+            )
+        ],
+        'layout': dict(
+            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            hovermode='closest'
+        )
+    }
+
+@app.callback(
+    Output('indicator-graphic4', 'figure'),
+    [Input('year--slider3', 'value')])
+def update_graph4(year_value3):
+    aux=df_morteNeonatal_AC[:]
+
+    menor_ano=aux['year_death'].min()
+    dataframe_original=aux[aux['year_death']==2006]
+    if year_value3>menor_ano:
+       for i in range(menor_ano+1,year_value3+1):
+           dataframe_auxiliar=aux[aux['year_death']==i]
+           dataframe_original=dataframe_original.append(dataframe_auxiliar)
+
+    lista_pesos=list(available_indicators_peso)
+
+    #aux_homem_final = dataframe_original[dataframe_original['n_sg_sexo']=='Homem']
+    #aux_mulher_final = dataframe_original[dataframe_original['n_sg_sexo']=='Mulher']
+    # x=[10,20,30,40]
+    # y=[1,2,3,4]
+    # z=[100,200,300,400]
+    
+    # x2=[15,20,20,15]
+    # y2=[4,3,2,1]
+    # z2=[400,300,200,100]
+
+    # teste=[x,y,z]
+    # teste1=[x2,y2,z2]
+
+    #teste1=[0][x,y,z]
+    #teste2=[1][x1,x2,x3]
+    return {
+        'data': [
+            # dict(
+            #     x=teste[0],
+            #     y=teste[1],
+            #     z=teste[2],
+            #     text=['Teste1','Teste2','Teste3','teste4'],
+            #     type='scatter3d',
+            #     mode='lines+markers',
+            #     name='TesteM',
+            #     marker={
+            #         'color':'rgb(0, 173, 3)'
+            #     }
+            # ),
+            dict(
+                x = [0,1,2,3,4,5],
+                y = [6,7,8,9,10,11],
+                z = [[1, 10, 10, 11, 11],
+                    [11, 10, 11, 10, 11],
+                    [10, 11, 11, 11, 10],
+                    [11, 10, 111, 10, 11],
+                    [10, 11, 10, 12, 10]
+                ],
+                type='surface',
+                surfacecolor='rgb(0, 255, 30)', 
+            )
+        ],
+        'layout': dict(
+            x='TesteX',
+            y='TesteY',
+            z='TesteZ',
+            margin={'l': 40, 'b': 40, 't': 10, 'r': 0},
+            hovermode='closest'
+        )
+    }
 
 
 
@@ -199,6 +313,6 @@ def update_graph2(xaxis_column_name, yaxis_column_name,
 
 
 if __name__ == '__main__':
-    app.run_server(host='192.168.70.99',port='8050',debug=True)
+    app.run_server(host='192.168.15.10',port='8050',debug=True)
 
 

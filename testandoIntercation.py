@@ -10,11 +10,9 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 df = pd.read_csv('https://plotly.github.io/datasets/country_indicators.csv')
-
-
-df_ac = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-AC.csv')
-df_es = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-ES.csv')
-df_rn = pd.read_csv('/home/lokra/Área de Trabalho/tiagoFDP/Dados-RN.csv')
+df_ac = pd.read_csv('Dados-AC.csv')
+df_es = pd.read_csv('Dados-ES.csv')
+df_rn = pd.read_csv('Dados-RN.csv')
 ##------------------ACRE---------------------
 df_morteNeonatal_AC=df_ac[:]
 df_morteNeonatal_AC['year_death'] = df_morteNeonatal_AC['year_death'].astype('Int64')
